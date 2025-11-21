@@ -20,7 +20,6 @@ const componentSchema = new Schema(
   { timestamps: true }
 );
 
-// index to quickly find broken components
 componentSchema.index({ isWorking: 1 });
 componentSchema.index({ room: 1, type: 1 });
 
