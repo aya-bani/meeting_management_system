@@ -1,111 +1,91 @@
-// backend/test-connection.js
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+// backend/server.js
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
-console.log('🔍 Testing MongoDB Atlas Connection...\n');
-console.log('📝 Connection Details:');
-console.log('   URI:', process.env.MONGO_URI?.replace(/:[^:@]+@/, ':****@'));
-console.log('   Timeout: 20 seconds\n');
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-let progressInterval;
-let dots = 0;
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-const testConnection = async () => {
-  try {
-    console.log('⏳ Connecting to MongoDB Atlas...');
-    
-    // Show progress dots
-    progressInterval = setInterval(() => {
-      dots = (dots + 1) % 4;
-      process.stdout.write('\r   ' + '.'.repeat(dots + 1) + '   ');
-    }, 500);
-
-    await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 20000,
-      socketTimeoutMS: 45000,
-      family: 4, // Force IPv4
-    });
-
-    clearInterval(progressInterval);
-    console.log('\r                    '); // Clear progress dots
-
-    console.log('\n✅ ✅ ✅ SUCCESS! Connected to MongoDB Atlas! ✅ ✅ ✅\n');
-    console.log('📊 Connection Information:');
-    console.log('   Database Name:', mongoose.connection.name);
-    console.log('   Host:', mongoose.connection.host);
-    console.log('   Ready State:', mongoose.connection.readyState, '(1 = connected)');
-    console.log('   Port:', mongoose.connection.port);
-    
-    // Test database operations
-    console.log('\n🧪 Testing database operations...');
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log('   Collections found:', collections.length);
-    
-    if (collections.length > 0) {
-      console.log('   Existing collections:', collections.map(c => c.name).join(', '));
-    } else {
-      console.log('   No collections yet (database is new - this is normal!)');
-    }
-
-    console.log('\n🎉 Everything is working perfectly!');
-    console.log('💡 You can now start your server with: npm start\n');
-    
-    await mongoose.connection.close();
-    process.exit(0);
-
-  } catch (error) {
-    clearInterval(progressInterval);
-    console.log('\r                    '); // Clear progress dots
-    
-    console.error('\n❌ ❌ ❌ CONNECTION FAILED! ❌ ❌ ❌\n');
-    console.error('Error Type:', error.name);
-    console.error('Error Message:', error.message);
-    
-    console.error('\n🔧 TROUBLESHOOTING STEPS:\n');
-    
-    if (error.message.includes('ETIMEOUT') || error.message.includes('timeout')) {
-      console.error('⚠️  TIMEOUT ERROR - This usually means:');
-      console.error('   1. Your IP is NOT whitelisted in MongoDB Atlas');
-      console.error('   2. Firewall is blocking the connection');
-      console.error('   3. VPN is interfering\n');
-      console.error('🔧 FIX:');
-      console.error('   → Go to: https://cloud.mongodb.com/');
-      console.error('   → Click "Network Access" (left sidebar)');
-      console.error('   → Click "+ ADD IP ADDRESS"');
-      console.error('   → Click "ALLOW ACCESS FROM ANYWHERE"');
-      console.error('   → Enter: 0.0.0.0/0');
-      console.error('   → Click "Confirm"');
-      console.error('   → WAIT 2-3 minutes then try again\n');
-    } else if (error.message.includes('authentication failed') || error.message.includes('auth')) {
-      console.error('⚠️  AUTHENTICATION ERROR - Wrong credentials');
-      console.error('🔧 FIX:');
-      console.error('   → Check username and password in .env file');
-      console.error('   → Make sure there are no spaces');
-      console.error('   → If password has special characters, URL encode them\n');
-    } else if (error.message.includes('ENOTFOUND')) {
-      console.error('⚠️  DNS ERROR - Cannot find MongoDB server');
-      console.error('🔧 FIX:');
-      console.error('   → Check your internet connection');
-      console.error('   → Verify connection string in .env');
-      console.error('   → Try using Google DNS (8.8.8.8)\n');
-    }
-    
-    console.error('📋 Current Configuration:');
-    console.error('   NODE_ENV:', process.env.NODE_ENV || 'not set');
-    console.error('   PORT:', process.env.PORT || 'not set');
-    console.error('\n💡 Need more help? Check the MongoDB Atlas dashboard for cluster status.\n');
-    
-    process.exit(1);
-  }
-};
-
-// Handle Ctrl+C gracefully
-process.on('SIGINT', () => {
-  clearInterval(progressInterval);
-  console.log('\n\n👋 Test cancelled by user');
-  process.exit(0);
+// ------------------ Mongoose Models ------------------ //
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true },
 });
 
-testConnection();
+const User = mongoose.model("User", userSchema);
+
+// ------------------ Routes ------------------ //
+
+// Test route
+app.get("/", (req, res) => res.send("Server is running!"));
+
+// Register a user
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: "User already exists" });
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
+    const newUser = new User({ name, email, password: hashedPassword });
+    await newUser.save();
+
+    // Generate JWT
+    const token = jwt.sign({ id: newUser._id }, "secretKey", { expiresIn: "1d" });
+
+    res.status(201).json({ token, user: { id: newUser._id, name, email } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Login a user
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+    // Generate JWT
+    const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1d" });
+
+    res.json({ token, user: { id: user._id, name: user.name, email } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ------------------ MongoDB Connection ------------------ //
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+  });
