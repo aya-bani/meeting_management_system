@@ -28,8 +28,8 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: ["admin", "hr"],
-      default: "hr",
-      required: true,
+      required: [true, "Role is required"],
+      // Remove the empty string default - force explicit role assignment
     },
     isActive: { 
       type: Boolean, 

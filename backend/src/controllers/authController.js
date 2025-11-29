@@ -2,86 +2,15 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
-// Generate JWT token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
-};
-
-// @desc Register new user
-// @route POST /api/auth/register
-// @access Public (or Admin only - depending on your requirement)
-export const register = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    // Validation
-    if (!name || !email || !password) {
-      return res.status(400).json({ 
-        message: "Please provide all required fields (name, email, password)" 
-      });
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Please provide a valid email" });
-    }
-
-    // Password validation (minimum 6 characters)
-    if (password.length < 6) {
-      return res.status(400).json({ 
-        message: "Password must be at least 6 characters long" 
-      });
-    }
-
-    // Check if user exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists with this email" });
-    }
-
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || "hr", // Default to 'hr' if no role provided
-    });
-
-    if (user) {
-      res.status(201).json({
-        success: true,
-        message: "User registered successfully",
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          isActive: user.isActive,
-        },
-        token: generateToken(user._id),
-      });
-    }
-  } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).json({ 
-      message: "Server error during registration", 
-      error: err.message 
-    });
-  }
-};
-
-// @desc Login user
-// @route POST /api/auth/login
-// @access Public
+// Login Controller
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
+    // Validate input
     if (!email || !password) {
       return res.status(400).json({ 
-        message: "Please provide email and password" 
+        message: "Email and password are required" 
       });
     }
 
@@ -89,64 +18,169 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ 
+        message: "Invalid email or password" 
+      });
     }
 
     // Check if user is active
     if (!user.isActive) {
       return res.status(403).json({ 
-        message: "Your account has been deactivated. Please contact admin." 
+        message: "Your account has been deactivated" 
       });
     }
 
-    // Compare password
-    const isPasswordMatch = await user.comparePassword(password);
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
 
-    if (isPasswordMatch) {
-      res.json({
-        success: true,
-        message: "Login successful",
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          isActive: user.isActive,
-        },
-        token: generateToken(user._id),
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        message: "Invalid email or password" 
       });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
     }
-  } catch (err) {
-    console.error("Login error:", err);
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        id: user._id, 
+        email: user.email, 
+        role: user.role
+      },
+      process.env.JWT_SECRET || "your-secret-key",
+      { expiresIn: "7d" }
+    );
+
+    // Prepare user data - MUST include role
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive
+    };
+
+    console.log('✅ Login successful:', { email: user.email, role: user.role });
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: userData
+    });
+
+  } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ 
-      message: "Server error during login", 
-      error: err.message 
+      message: "Server error during login",
+      error: error.message 
     });
   }
 };
 
-// @desc Get current user profile
-// @route GET /api/auth/profile
-// @access Private
-export const getProfile = async (req, res) => {
+// Register Controller
+export const register = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
-    
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const { name, email, password, role } = req.body;
+
+    // Validate input
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ 
+        message: "All fields are required (name, email, password, role)" 
+      });
     }
 
-    res.json({
-      success: true,
-      user,
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ 
+        message: "User with this email already exists" 
+      });
+    }
+
+    // Validate role
+    if (!['admin', 'hr'].includes(role)) {
+      return res.status(400).json({ 
+        message: "Invalid role. Must be 'admin' or 'hr'" 
+      });
+    }
+
+    // Create new user
+    const newUser = new User({
+      name,
+      email,
+      password,
+      role
     });
-  } catch (err) {
-    console.error("Get profile error:", err);
+
+    await newUser.save();
+
+    // Generate token
+    const token = jwt.sign(
+      { 
+        id: newUser._id, 
+        email: newUser.email, 
+        role: newUser.role 
+      },
+      process.env.JWT_SECRET || "your-secret-key",
+      { expiresIn: "7d" }
+    );
+
+    // Return user data
+    const userData = {
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      isActive: newUser.isActive
+    };
+
+    console.log('✅ Registration successful:', { email: newUser.email, role: newUser.role });
+
+    res.status(201).json({
+      message: "User registered successfully",
+      token,
+      user: userData
+    });
+
+  } catch (error) {
+    console.error("Registration error:", error);
     res.status(500).json({ 
-      message: "Server error getting profile", 
-      error: err.message 
+      message: "Server error during registration",
+      error: error.message 
     });
   }
+};
+
+// Get current user (protected route)
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: "User not found" 
+      });
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive
+    });
+
+  } catch (error) {
+    console.error("Get current user error:", error);
+    res.status(500).json({ 
+      message: "Server error",
+      error: error.message 
+    });
+  }
+};
+
+// Logout (optional - mainly client-side)
+export const logout = (req, res) => {
+  res.status(200).json({ 
+    message: "Logout successful" 
+  });
 };

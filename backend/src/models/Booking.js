@@ -36,7 +36,7 @@ bookingSchema.statics.isRoomAvailable = async function (roomId, date, startTime,
     $expr: {
 
       $and: [
-        { $lt: [{ $toInt: { $multiply: [{ $toInt: { $substr: ["$startTime", 0, 2] } }, 60] } }, 0] } // placeholder to avoid special-case in some envs
+        { $lt: [{ $toInt: { $multiply: [{ $toInt: { $substr: ["$startTime", 0, 2] } }, 60] } }, 0] } 
       ],
     },
   };

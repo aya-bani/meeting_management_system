@@ -10,7 +10,7 @@ const componentSchema = new Schema(
       enum: ["camera", "datashow", "whiteboard", "microphone", "screen", "speaker", "other"],
       required: true,
     },
-    name: { type: String, required: true }, // e.g., "Logitech MeetUp"
+    name: { type: String, required: true }, 
     serialNumber: { type: String, trim: true, default: "" },
     quantity: { type: Number, default: 1, min: 0 },
     isWorking: { type: Boolean, default: true },

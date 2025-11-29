@@ -17,19 +17,51 @@ export const getComponents = async (req, res) => {
 // @desc Add component to room (admin only)
 export const createComponent = async (req, res) => {
   try {
-    const { room, type, name, quantity, isWorking } = req.body;
+    console.log("📥 Incoming component data:", req.body);
 
+    const { room, type, name, serialNumber, quantity, isWorking, notes } = req.body;
+
+    // 1️⃣ Validate missing required fields
+    if (!room || !type || !name) {
+      return res.status(400).json({ message: "room, type and name are required fields" });
+    }
+
+    // 2️⃣ Validate allowed component type
+    const allowedTypes = [
+      "camera", "datashow", "whiteboard",
+      "microphone", "screen", "speaker", "other"
+    ];
+
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({ message: "Invalid component type" });
+    }
+
+    // 3️⃣ Check if room exists
     const roomExists = await Room.findById(room);
-    if (!roomExists) return res.status(400).json({ message: "Room not found" });
+    if (!roomExists) {
+      return res.status(400).json({ message: "Room not found" });
+    }
 
-    const component = await Component.create({ room, type, name, quantity, isWorking });
-    // optionally push to room.components
+    // 4️⃣ Create the component
+    const component = await Component.create({
+      room,
+      type,
+      name,
+      serialNumber: serialNumber || "",
+      quantity: quantity ?? 1,
+      isWorking: isWorking ?? true,
+      notes: notes || "",
+    });
+
+    // 5️⃣ Push component to the room array
     roomExists.components.push(component._id);
     await roomExists.save();
 
-    res.status(201).json(component);
+    return res.status(201).json(component);
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("❌ Component creation error:", err);
+    return res.status(500).json({ message: err.message });
   }
 };
 

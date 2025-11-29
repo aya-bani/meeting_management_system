@@ -169,20 +169,20 @@ function BookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-stone-50 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">Meeting Room Booking</h1>
+            <h1 className="text-3xl font-bold text-stone-900">Meeting Room Booking</h1>
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/dashboard')}
-                className="px-4 py-2 text-gray-700 hover:text-gray-900 transition"
+                className="px-4 py-2 text-stone-700 hover:text-stone-900 transition"
               >
                 ← Back to Dashboard
               </button>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+              <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
                 {user?.role === 'admin' ? 'Admin' : 'Manager'}
               </span>
             </div>
@@ -193,14 +193,14 @@ function BookingPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tabs */}
         <div className="mb-6">
-          <div className="border-b border-gray-200">
+          <div className="border-b border-stone-200">
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('create')}
                 className={`${
                   activeTab === 'create'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-amber-500 text-amber-600'
+                    : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition`}
               >
                 Create Booking
@@ -209,8 +209,8 @@ function BookingPage() {
                 onClick={() => setActiveTab('my-bookings')}
                 className={`${
                   activeTab === 'my-bookings'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-amber-500 text-amber-600'
+                    : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition`}
               >
                 My Bookings
@@ -221,30 +221,30 @@ function BookingPage() {
 
         {/* Messages */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+          <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg">
             {success}
           </div>
         )}
 
         {/* Create Booking Tab */}
         {activeTab === 'create' && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-stone-50 rounded-lg shadow p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Floor Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
                     Select Floor (Optional)
                   </label>
                   <select
                     value={selectedFloor}
                     onChange={(e) => handleFloorChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   >
                     <option value="">All Floors</option>
                     {floors.map((floor) => (
@@ -257,7 +257,7 @@ function BookingPage() {
 
                 {/* Room Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
                     Select Room *
                   </label>
                   <select
@@ -265,7 +265,7 @@ function BookingPage() {
                     value={formData.room}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   >
                     <option value="">Choose a room...</option>
                     {rooms.map((room) => (
@@ -278,7 +278,7 @@ function BookingPage() {
 
                 {/* Start Time */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
                     Start Time *
                   </label>
                   <input
@@ -287,13 +287,13 @@ function BookingPage() {
                     value={formData.startTime}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   />
                 </div>
 
                 {/* End Time */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
                     End Time *
                   </label>
                   <input
@@ -302,13 +302,13 @@ function BookingPage() {
                     value={formData.endTime}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   />
                 </div>
 
                 {/* Number of Attendees */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
                     Number of Attendees *
                   </label>
                   <input
@@ -318,13 +318,13 @@ function BookingPage() {
                     onChange={handleInputChange}
                     min="1"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   />
                 </div>
 
                 {/* Purpose */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
                     Meeting Purpose *
                   </label>
                   <textarea
@@ -333,7 +333,7 @@ function BookingPage() {
                     onChange={handleInputChange}
                     required
                     rows="3"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                     placeholder="Brief description of the meeting..."
                   />
                 </div>
@@ -341,7 +341,7 @@ function BookingPage() {
 
               {/* Components Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-stone-700 mb-3">
                   Required Equipment (Optional)
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -350,16 +350,16 @@ function BookingPage() {
                       key={component._id}
                       className={`border-2 rounded-lg p-4 cursor-pointer transition ${
                         selectedComponents.includes(component._id)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-amber-500 bg-amber-50'
+                          : 'border-stone-200 hover:border-stone-300'
                       }`}
                       onClick={() => handleComponentToggle(component._id)}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium text-gray-900">{component.name}</h4>
-                          <p className="text-sm text-gray-600">{component.type}</p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <h4 className="font-medium text-stone-900">{component.name}</h4>
+                          <p className="text-sm text-stone-600">{component.type}</p>
+                          <p className="text-xs text-stone-500 mt-1">
                             Available: {component.quantity - (component.inUse || 0)}
                           </p>
                         </div>
@@ -367,7 +367,7 @@ function BookingPage() {
                           type="checkbox"
                           checked={selectedComponents.includes(component._id)}
                           onChange={() => {}}
-                          className="h-5 w-5 text-blue-600"
+                          className="h-5 w-5 text-amber-600"
                         />
                       </div>
                     </div>
@@ -380,14 +380,14 @@ function BookingPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/dashboard')}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  className="px-6 py-2 border border-stone-300 text-stone-700 rounded-lg hover:bg-stone-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Creating...' : 'Create Booking'}
                 </button>
@@ -398,15 +398,15 @@ function BookingPage() {
 
         {/* My Bookings Tab */}
         {activeTab === 'my-bookings' && (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-stone-50 rounded-lg shadow overflow-hidden">
             {loading ? (
               <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-gray-600">Loading bookings...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+                <p className="mt-2 text-stone-600">Loading bookings...</p>
               </div>
             ) : myBookings.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-8 text-center text-stone-500">
+                <svg className="w-16 h-16 mx-auto text-stone-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <p className="text-lg font-medium">No bookings yet</p>
@@ -414,61 +414,61 @@ function BookingPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-stone-200">
+                  <thead className="bg-stone-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                         Room
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                         Date & Time
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                         Purpose
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                         Attendees
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-stone-50 divide-y divide-stone-200">
                     {myBookings.map((booking) => (
-                      <tr key={booking._id} className="hover:bg-gray-50">
+                      <tr key={booking._id} className="hover:bg-stone-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-stone-900">
                             {booking.room?.name || 'N/A'}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-stone-500">
                             Floor {booking.room?.floor?.floorNumber}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-stone-900">
                             {new Date(booking.startTime).toLocaleDateString()}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-stone-500">
                             {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{booking.purpose}</div>
+                          <div className="text-sm text-stone-900">{booking.purpose}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-900">
                           {booking.attendees}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             booking.status === 'confirmed' 
-                              ? 'bg-green-100 text-green-800' 
+                              ? 'bg-amber-100 text-amber-800' 
                               : booking.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-amber-100 text-amber-800'
                           }`}>
                             {booking.status}
                           </span>
@@ -477,7 +477,7 @@ function BookingPage() {
                           {booking.status !== 'cancelled' && (
                             <button
                               onClick={() => handleCancelBooking(booking._id)}
-                              className="text-red-600 hover:text-red-900 font-medium"
+                              className="text-amber-600 hover:text-amber-900 font-medium"
                             >
                               Cancel
                             </button>
