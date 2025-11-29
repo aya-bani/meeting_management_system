@@ -48,7 +48,7 @@ export const deleteRoom = async (req, res) => {
 
     // Remove components in that room
     await Component.deleteMany({ room: room._id });
-    await room.remove();
+    await Room.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Room deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
