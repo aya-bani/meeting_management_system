@@ -11,6 +11,7 @@ import AllBookingsPage from './pages/admin/AllBookingsPage';
 import RoomsPage from './pages/admin/RoomsPage';
 import ComponentsPage from './pages/admin/ComponentsPage';
 import FloorsPage from './pages/admin/FloorsPage';
+import ComponentReport from './pages/hrmanager/ComponentReport';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -107,6 +108,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['hr']}>
               <HRDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/hr/component-report" 
+          element={
+            <ProtectedRoute allowedRoles={['hr']}>
+              <ComponentReport />
             </ProtectedRoute>
           } 
         />

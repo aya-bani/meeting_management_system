@@ -33,6 +33,15 @@ function HRSidebar() {
         </svg>
       ),
     },
+    {
+      label: 'Report Component Issue',
+      path: '/hr/component-report',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-1.414-1.414L12 9.172 7.05 4.222 5.636 5.636 10.586 10.586 5.636 15.536l1.414 1.414L12 12l4.95 4.95 1.414-1.414L13.414 10.586 18.364 5.636z" />
+        </svg>
+      ),
+    },
   ];
 
   return <Sidebar menuItems={menuItems} user={user} />;

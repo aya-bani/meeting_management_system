@@ -17,4 +17,10 @@ export const reportService = {
     const response = await api.get('/reports/component-usage');
     return response.data;
   },
+
+  // HR creates a new component/room issue report
+  createReport: async (reportData) => {
+    const response = await api.post('/reports', reportData);
+    return response.data;
+  },
 };
