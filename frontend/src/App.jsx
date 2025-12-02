@@ -8,6 +8,9 @@ import HRDashboard from './pages/HRDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import BookingPage from './pages/BookingPage';
 import AllBookingsPage from './pages/admin/AllBookingsPage';
+import RoomsPage from './pages/admin/RoomsPage';
+import ComponentsPage from './pages/admin/ComponentsPage';
+import FloorsPage from './pages/admin/FloorsPage';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -133,10 +136,7 @@ function App() {
           path="/admin/rooms" 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <div className="p-8 text-center">
-                <h1 className="text-2xl font-bold">Rooms Management</h1>
-                <p className="text-stone-600 mt-2">Coming soon...</p>
-              </div>
+              <RoomsPage />
             </ProtectedRoute>
           } 
         />
@@ -145,10 +145,7 @@ function App() {
           path="/admin/components" 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <div className="p-8 text-center">
-                <h1 className="text-2xl font-bold">Components Management</h1>
-                <p className="text-gray-600 mt-2">Coming soon...</p>
-              </div>
+              <ComponentsPage />
             </ProtectedRoute>
           } 
         />
@@ -157,10 +154,7 @@ function App() {
           path="/admin/floors" 
           element={
             <ProtectedRoute allowedRoles={['admin', 'administrator']}>
-              <div className="p-8 text-center">
-                <h1 className="text-2xl font-bold">Floors Management</h1>
-                <p className="text-gray-600 mt-2">Coming soon...</p>
-              </div>
+              <FloorsPage />
             </ProtectedRoute>
           } 
         />
