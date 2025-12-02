@@ -23,4 +23,17 @@ export const reportService = {
     const response = await api.post('/reports', reportData);
     return response.data;
   },
+
+  // Get all reports (for admin)
+  getAllReports: async (status) => {
+    const params = status ? { status } : {};
+    const response = await api.get('/reports', { params });
+    return response.data;
+  },
+
+  // Update report status (admin only)
+  updateReport: async (id, reportData) => {
+    const response = await api.put(`/reports/${id}`, reportData);
+    return response.data;
+  },
 };

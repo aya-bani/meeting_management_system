@@ -7,10 +7,27 @@ export const getComponents = async (req, res) => {
   try {
     const filter = {};
     if (req.query.room) filter.room = req.query.room;
-    const components = await Component.find(filter).populate("room");
-    res.status(200).json(components);
+    
+    const components = await Component.find(filter)
+      .populate({
+        path: "room",
+        populate: {
+          path: "floor",
+          model: "Floor"
+        }
+      });
+    
+    // Filter out components with invalid room references
+    const validComponents = components.filter(component => 
+      component.room !== null && 
+      component.room !== undefined &&
+      component.room._id !== undefined
+    );
+    
+    res.status(200).json(validComponents);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error fetching components:", err);
+    res.status(500).json({ message: err.message || "Failed to fetch components" });
   }
 };
 

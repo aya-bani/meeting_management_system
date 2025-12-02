@@ -11,6 +11,7 @@ import AllBookingsPage from './pages/admin/AllBookingsPage';
 import RoomsPage from './pages/admin/RoomsPage';
 import ComponentsPage from './pages/admin/ComponentsPage';
 import FloorsPage from './pages/admin/FloorsPage';
+import ReportsPage from './pages/admin/ReportsPage';
 import ComponentReport from './pages/hrmanager/ComponentReport';
 
 // Protected Route Component
@@ -172,10 +173,7 @@ function App() {
           path="/admin/reports" 
           element={
             <ProtectedRoute allowedRoles={['admin', 'administrator']}>
-              <div className="p-8 text-center">
-                <h1 className="text-2xl font-bold">Reports & Analytics</h1>
-                <p className="text-gray-600 mt-2">Coming soon...</p>
-              </div>
+              <ReportsPage />
             </ProtectedRoute>
           } 
         />
