@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import HRDashboard from './pages/HRDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import BookingPage from './pages/BookingPage';
+import AllBookingsPage from './pages/admin/AllBookingsPage';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -180,10 +181,7 @@ function App() {
           path="/admin/bookings" 
           element={
             <ProtectedRoute allowedRoles={['admin', 'administrator']}>
-              <div className="p-8 text-center">
-                <h1 className="text-2xl font-bold">All Bookings</h1>
-                <p className="text-gray-600 mt-2">Coming soon...</p>
-              </div>
+              <AllBookingsPage />
             </ProtectedRoute>
           } 
         />
