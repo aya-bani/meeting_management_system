@@ -7,6 +7,10 @@ import { roomService } from '../services/roomService';
 import { componentService } from '../services/componentService';
 import { floorService } from '../services/floorService';
 import AdminSidebar from '../components/AdminSidebar';
+import AddRoomForm from '../components/admin/AddRoomForm';
+import AddFloorForm from '../components/admin/AddFloorForm';
+import AddComponentForm from '../components/admin/AddComponentForm';
+import ComponentRoomReports from '../components/admin/ComponentRoomReports';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -22,38 +26,15 @@ function AdminDashboard() {
   const [recentBookings, setRecentBookings] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [components, setComponents] = useState([]);
+  const [floors, setFloors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [componentTypeFilter, setComponentTypeFilter] = useState('');
   
   // Modal states
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [showFloorModal, setShowFloorModal] = useState(false);
   const [showComponentModal, setShowComponentModal] = useState(false);
-  const [floors, setFloors] = useState([]);
-  
-  // Form states
-  const [roomForm, setRoomForm] = useState({
-    name: '',
-    capacity: '',
-    floor: '',
-    description: ''
-  });
-  const [floorForm, setFloorForm] = useState({
-    floorNumber: '',
-    name: '',
-    description: ''
-  });
-  const [componentForm, setComponentForm] = useState({
-    room: '',
-    type: '',
-    name: '',
-    serialNumber: '',
-    quantity: 1,
-    isWorking: true,
-    notes: ''
-  });
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
@@ -96,51 +77,6 @@ function AdminDashboard() {
       setError(err.response?.data?.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/login');
-  };
-
-  const handleCreateRoom = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    
-    try {
-      await roomService.createRoom({
-        ...roomForm,
-        capacity: parseInt(roomForm.capacity),
-      });
-      setSuccess('Room created successfully!');
-      setShowRoomModal(false);
-      setRoomForm({ name: '', capacity: '', floor: '', description: '' });
-      fetchAdminData();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create room');
-    }
-  };
-
-  const handleCreateFloor = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    
-    try {
-      await floorService.createFloor({
-        ...floorForm,
-        floorNumber: parseInt(floorForm.floorNumber),
-      });
-      setSuccess('Floor created successfully!');
-      setShowFloorModal(false);
-      setFloorForm({ floorNumber: '', name: '', description: '' });
-      fetchAdminData();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create floor');
     }
   };
 
@@ -225,114 +161,6 @@ function AdminDashboard() {
     }
   };
 
-  const handleCreateComponent = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    
-    try {
-      await componentService.createComponent({
-        ...componentForm,
-        quantity: parseInt(componentForm.quantity) || 1,
-      });
-      setSuccess('Component created successfully!');
-      setShowComponentModal(false);
-      setComponentForm({ room: '', type: '', name: '', serialNumber: '', quantity: 1, isWorking: true, notes: '' });
-      fetchAdminData();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create component');
-    }
-  };
-
-  // Filter components by type
-  const filteredComponents = componentTypeFilter
-    ? components.filter((c) => c.type === componentTypeFilter)
-    : components;
-
-  // Group components by room
-  const groupComponentsByRoom = () => {
-    const grouped = {};
-
-    filteredComponents.forEach((component) => {
-      let roomId, roomName, floorId, floorName;
-
-      // Get room info
-      if (component.room && typeof component.room === "object") {
-        roomId = component.room._id;
-        roomName = component.room.name || "Unknown Room";
-        // Check if room has floor populated
-        if (component.room.floor && typeof component.room.floor === "object") {
-          floorId = component.room.floor._id;
-          floorName = component.room.floor.name || "Unknown Floor";
-        } else {
-          // Find floor from rooms array
-          const room = rooms.find((r) => r._id === roomId);
-          if (room) {
-            const roomFloorId =
-              room.floor && typeof room.floor === "object"
-                ? room.floor._id
-                : room.floor;
-            floorId = roomFloorId;
-            const floor = floors.find((f) => f._id === roomFloorId);
-            floorName = floor ? floor.name : "Unknown Floor";
-          } else {
-            floorId = "unknown";
-            floorName = "Unknown Floor";
-          }
-        }
-      } else {
-        roomId = component.room;
-        const room = rooms.find((r) => r._id === roomId);
-        if (room) {
-          roomName = room.name || "Unknown Room";
-          const roomFloorId =
-            room.floor && typeof room.floor === "object"
-              ? room.floor._id
-              : room.floor;
-          floorId = roomFloorId;
-          const floor = floors.find((f) => f._id === roomFloorId);
-          floorName = floor ? floor.name : "Unknown Floor";
-        } else {
-          roomName = "Unknown Room";
-          floorId = "unknown";
-          floorName = "Unknown Floor";
-        }
-      }
-
-      // Initialize room if not exists
-      if (!grouped[roomId]) {
-        grouped[roomId] = {
-          roomId,
-          roomName,
-          floorName,
-          components: [],
-        };
-      }
-
-      // Add component to room
-      grouped[roomId].components.push(component);
-    });
-
-    // Convert to array and sort
-    return Object.values(grouped)
-      .sort((a, b) => {
-        // First sort by floor name
-        const floorCompare = a.floorName.localeCompare(b.floorName);
-        if (floorCompare !== 0) return floorCompare;
-        // Then by room name
-        return a.roomName.localeCompare(b.roomName);
-      })
-      .map((roomGroup) => ({
-        ...roomGroup,
-        components: roomGroup.components.sort((a, b) =>
-          a.name.localeCompare(b.name)
-        ),
-      }));
-  };
-
-  const groupedComponentsByRoom = groupComponentsByRoom();
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -366,772 +194,281 @@ function AdminDashboard() {
         </header>
 
         <main className="px-6 py-8">
-        {/* Error Message */}
-        {error && (
-          <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-        
-        {/* Success Message */}
-        {success && (
-          <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-3 rounded-lg mb-6">
-            {success}
-          </div>
-        )}
-
-        {/* Admin Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">Admin Controls</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <button
-              onClick={() => {
-                setError('');
-                setSuccess('');
-                setShowRoomModal(true);
-              }}
-              className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition text-left border-l-4 border-indigo-500"
-            >
-              <div className="flex items-center">
-                <div className="bg-indigo-100 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="font-semibold text-slate-800">Add Room</h3>
-                  <p className="text-xs text-slate-600">Create new room</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => {
-                setError('');
-                setSuccess('');
-                setShowFloorModal(true);
-              }}
-              className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition text-left border-l-4 border-indigo-500"
-            >
-              <div className="flex items-center">
-                <div className="bg-indigo-100 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="font-semibold text-slate-800">Add Floor</h3>
-                  <p className="text-xs text-slate-600">Create new floor</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => {
-                setError('');
-                setSuccess('');
-                setShowComponentModal(true);
-              }}
-              className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition text-left border-l-4 border-indigo-500"
-            >
-              <div className="flex items-center">
-                <div className="bg-indigo-100 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="font-semibold text-slate-800">Add Component</h3>
-                  <p className="text-xs text-slate-600">Create new component</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/admin/reports')}
-              className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition text-left border-l-4 border-indigo-500"
-            >
-              <div className="flex items-center">
-                <div className="bg-indigo-100 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="font-semibold text-slate-800">Reports</h3>
-                  <p className="text-xs text-slate-600">Analytics & insights</p>
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">System Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-600">Total Bookings</p>
-                  <p className="text-2xl font-bold text-slate-800 mt-1">{stats.totalBookings}</p>
-                </div>
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+              {error}
             </div>
-
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-600">Active Now</p>
-                  <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.activeBookings}</p>
-                </div>
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
+          )}
+          
+          {/* Success Message */}
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+              {success}
             </div>
+          )}
 
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-600">Pending</p>
-                  <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.pendingBookings}</p>
-                </div>
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
+          {/* Admin Quick Actions */}
+      
 
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-600">Total Rooms</p>
-                  <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.totalRooms}</p>
-                </div>
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-600">Components</p>
-                  <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.totalComponents}</p>
-                </div>
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-600">Floors</p>
-                  <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.totalFloors}</p>
-                </div>
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Manage Rooms Section */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-slate-800">Manage Rooms</h2>
-          </div>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            {rooms.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">No rooms yet</div>
-            ) : (
-              <div className="divide-y divide-slate-200">
-                {rooms.map((room) => (
-                  <div key={room._id} className="p-4 flex items-center justify-between hover:bg-white">
-                    <div>
-                      <h3 className="font-semibold text-slate-800">{room.name}</h3>
-                      <p className="text-sm text-slate-600">Floor {room.floor?.floorNumber || 'N/A'} • Capacity: {room.capacity}</p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteRoom(room._id)}
-                      className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition text-sm"
-                    >
-                      Remove
-                    </button>
+          {/* Stats Cards */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">System Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-600">Total Bookings</p>
+                    <p className="text-2xl font-bold text-slate-800 mt-1">{stats.totalBookings}</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Manage Floors Section */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-slate-800">Manage Floors</h2>
-          </div>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            {floors.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">No floors yet</div>
-            ) : (
-              <div className="divide-y divide-slate-200">
-                {floors.map((floor) => (
-                  <div key={floor._id} className="p-4 flex items-center justify-between hover:bg-white">
-                    <div>
-                      <h3 className="font-semibold text-slate-800">Floor {floor.floorNumber} - {floor.name}</h3>
-                      {floor.description && <p className="text-sm text-slate-600">{floor.description}</p>}
-                    </div>
-                    <button
-                      onClick={() => handleDeleteFloor(floor._id)}
-                      className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition text-sm"
-                    >
-                      Remove
-                    </button>
+                  <div className="bg-indigo-100 p-2 rounded-lg">
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
                   </div>
-                ))}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Manage Components Section */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-slate-800">Manage Components</h2>
-            <div className="flex items-center gap-3">
-              <select
-                value={componentTypeFilter}
-                onChange={(e) => setComponentTypeFilter(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
-              >
-                <option value="">All Types</option>
-                <option value="camera">Camera</option>
-                <option value="datashow">Datashow/Projector</option>
-                <option value="whiteboard">Whiteboard</option>
-                <option value="microphone">Microphone</option>
-                <option value="screen">Screen</option>
-                <option value="speaker">Speaker</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-600">Active Now</p>
+                    <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.activeBookings}</p>
+                  </div>
+                  <div className="bg-indigo-100 p-2 rounded-lg">
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-600">Pending</p>
+                    <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.pendingBookings}</p>
+                  </div>
+                  <div className="bg-indigo-100 p-2 rounded-lg">
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-600">Total Rooms</p>
+                    <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.totalRooms}</p>
+                  </div>
+                  <div className="bg-indigo-100 p-2 rounded-lg">
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-600">Components</p>
+                    <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.totalComponents}</p>
+                  </div>
+                  <div className="bg-indigo-100 p-2 rounded-lg">
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-600">Floors</p>
+                    <p className="text-2xl font-bold text-indigo-600 mt-1">{stats.totalFloors}</p>
+                  </div>
+                  <div className="bg-indigo-100 p-2 rounded-lg">
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            {filteredComponents.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">No components found</div>
-            ) : (
-              <div className="divide-y divide-slate-200">
-                {groupedComponentsByRoom.map((roomGroup) => (
-                  <div key={roomGroup.roomId} className="p-4">
-                    <div className="mb-3 pb-2 border-b border-slate-200">
-                      <h3 className="font-semibold text-slate-800">
-                        {roomGroup.roomName}
-                      </h3>
-                      <p className="text-sm text-slate-600">
-                        Floor {roomGroup.floorName} • {roomGroup.components.length}{" "}
-                        {roomGroup.components.length === 1 ? "component" : "components"}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      {roomGroup.components.map((component) => (
-                        <div
-                          key={component._id}
-                          className="p-3 bg-slate-50 rounded-lg flex items-center justify-between hover:bg-slate-100 transition"
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-slate-800">
-                                {component.name}
-                              </h4>
-                              <span
-                                className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                  component.type === "camera"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : component.type === "datashow"
-                                    ? "bg-purple-100 text-purple-800"
-                                    : component.type === "whiteboard"
-                                    ? "bg-gray-100 text-gray-800"
-                                    : component.type === "microphone"
-                                    ? "bg-pink-100 text-pink-800"
-                                    : component.type === "screen"
-                                    ? "bg-indigo-100 text-indigo-800"
-                                    : component.type === "speaker"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-gray-100 text-gray-800"
-                                }`}
-                              >
-                                {component.type}
-                              </span>
-                              <span
-                                className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                  component.isWorking
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {component.isWorking ? "Working" : "Not Working"}
-                              </span>
-                            </div>
-                            <p className="text-sm text-slate-600 mt-1">
-                              Quantity: {component.quantity || 1}
-                              {component.serialNumber && ` • Serial: ${component.serialNumber}`}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteComponent(component._id)}
-                            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm ml-4"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* All Bookings Table */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-slate-800">Recent Bookings</h2>
-            <button
-              onClick={() => navigate('/admin/bookings')}
-              className="text-indigo-600 hover:text-indigo-800 font-medium"
-            >
-              View All →
-            </button>
-          </div>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            {recentBookings.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">
-                No bookings yet.
-              </div>
-            ) : (
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-white">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Room
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Booked By
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Date & Time
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Purpose
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
-                  {recentBookings.map((booking) => (
-                    <tr key={booking._id} className="hover:bg-white">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-slate-800">
-                          {booking.room?.name || 'N/A'}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          Floor {booking.room?.floor?.floorNumber}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-slate-800">
-                          {booking.bookedBy?.name || booking.bookedBy?.email || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-slate-800">
-                          {new Date(booking.startTime).toLocaleDateString()}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-800 max-w-xs truncate">{booking.purpose}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          booking.status === 'confirmed' 
-                            ? 'bg-indigo-100 text-indigo-800' 
-                            : booking.status === 'pending'
-                            ? 'bg-indigo-100 text-indigo-800'
-                            : 'bg-indigo-100 text-indigo-800'
-                        }`}>
-                          {booking.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex space-x-2">
-                          {booking.status === 'pending' && (
-                            <button
-                              onClick={() => handleAcceptBooking(booking._id)}
-                              className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-                            >
-                              Accept
-                            </button>
-                          )}
-                          {booking.status !== 'cancelled' && (
-                            <button
-                              onClick={() => handleCancelBooking(booking._id)}
-                              className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-                            >
-                              Cancel
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+          {/* Manage Rooms Section */}
+          {/* <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-slate-800">Manage Rooms</h2>
+            </div>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              {rooms.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">No rooms yet</div>
+              ) : (
+                <div className="divide-y divide-slate-200">
+                  {rooms.map((room) => (
+                    <div key={room._id} className="p-4 flex items-center justify-between hover:bg-slate-50">
+                      <div>
+                        <h3 className="font-semibold text-slate-800">{room.name}</h3>
+                        <p className="text-sm text-slate-600">Floor {room.floor?.floorNumber || 'N/A'} • Capacity: {room.capacity}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteRoom(room._id)}
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
+                </div>
+              )}
+            </div>
+          </div> */}
 
-        {/* Add Room Modal */}
-        {showRoomModal && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => {
-              setShowRoomModal(false);
-              setRoomForm({ name: '', capacity: '', floor: '', description: '' });
-            }}
-          >
-            <div 
-              className="bg-white rounded-lg p-6 w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-slate-800">Add New Room</h3>
-                <button
-                  onClick={() => {
-                    setShowRoomModal(false);
-                    setRoomForm({ name: '', capacity: '', floor: '', description: '' });
-                  }}
-                  className="text-slate-500 hover:text-slate-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <form onSubmit={handleCreateRoom} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Room Name *</label>
-                  <input
-                    type="text"
-                    value={roomForm.name}
-                    onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
+          {/* Manage Floors Section */}
+          {/* <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-slate-800">Manage Floors</h2>
+            </div>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              {floors.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">No floors yet</div>
+              ) : (
+                <div className="divide-y divide-slate-200">
+                  {floors.map((floor) => (
+                    <div key={floor._id} className="p-4 flex items-center justify-between hover:bg-slate-50">
+                      <div>
+                        <h3 className="font-semibold text-slate-800">Floor {floor.floorNumber} - {floor.name}</h3>
+                        {floor.description && <p className="text-sm text-slate-600">{floor.description}</p>}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteFloor(floor._id)}
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Capacity *</label>
-                  <input
-                    type="number"
-                    value={roomForm.capacity}
-                    onChange={(e) => setRoomForm({ ...roomForm, capacity: e.target.value })}
-                    required
-                    min="1"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Floor *</label>
-                  <select
-                    value={roomForm.floor}
-                    onChange={(e) => setRoomForm({ ...roomForm, floor: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Select a floor</option>
-                    {floors.map((floor) => (
-                      <option key={floor._id} value={floor._id}>
-                        Floor {floor.floorNumber} - {floor.name}
-                      </option>
+              )}
+            </div>
+          </div> */}
+
+          {/* Component Reports - Now using separate component */}
+          <ComponentRoomReports
+            components={components}
+            rooms={rooms}
+            floors={floors}
+            onDeleteComponent={handleDeleteComponent}
+          />
+
+          {/* All Bookings Table */}
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-slate-800">Recent Bookings</h2>
+              <button
+                onClick={() => navigate('/admin/bookings')}
+                className="text-indigo-600 hover:text-indigo-800 font-medium"
+              >
+                View All →
+              </button>
+            </div>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              {recentBookings.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">No bookings yet.</div>
+              ) : (
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Room</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Booked By</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date & Time</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Purpose</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {recentBookings.map((booking) => (
+                      <tr key={booking._id} className="hover:bg-slate-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-slate-800">{booking.room?.name || 'N/A'}</div>
+                          <div className="text-sm text-slate-500">Floor {booking.room?.floor?.floorNumber}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-800">{booking.bookedBy?.name || booking.bookedBy?.email || 'N/A'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-800">{new Date(booking.startTime).toLocaleDateString()}</div>
+                          <div className="text-sm text-slate-500">{new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-slate-800 max-w-xs truncate">{booking.purpose}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            booking.status === 'confirmed' 
+                              ? 'bg-green-100 text-green-800' 
+                              : booking.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {booking.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex space-x-2">
+                            {booking.status === 'pending' && (
+                              <button
+                                onClick={() => handleAcceptBooking(booking._id)}
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                              >
+                                Accept
+                              </button>
+                            )}
+                            {booking.status !== 'cancelled' && (
+                              <button
+                                onClick={() => handleCancelBooking(booking._id)}
+                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                  <textarea
-                    value={roomForm.description}
-                    onChange={(e) => setRoomForm({ ...roomForm, description: e.target.value })}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowRoomModal(false);
-                      setRoomForm({ name: '', capacity: '', floor: '', description: '' });
-                    }}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    Create Room
-                  </button>
-                </div>
-              </form>
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
-        )}
-
-        {/* Add Floor Modal */}
-        {showFloorModal && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => {
-              setShowFloorModal(false);
-              setFloorForm({ floorNumber: '', name: '', description: '' });
-            }}
-          >
-            <div 
-              className="bg-white rounded-lg p-6 w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-slate-800">Add New Floor</h3>
-                <button
-                  onClick={() => {
-                    setShowFloorModal(false);
-                    setFloorForm({ floorNumber: '', name: '', description: '' });
-                  }}
-                  className="text-slate-500 hover:text-slate-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <form onSubmit={handleCreateFloor} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Floor Number *</label>
-                  <input
-                    type="number"
-                    value={floorForm.floorNumber}
-                    onChange={(e) => setFloorForm({ ...floorForm, floorNumber: e.target.value })}
-                    required
-                    min="1"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Floor Name *</label>
-                  <input
-                    type="text"
-                    value={floorForm.name}
-                    onChange={(e) => setFloorForm({ ...floorForm, name: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                  <textarea
-                    value={floorForm.description}
-                    onChange={(e) => setFloorForm({ ...floorForm, description: e.target.value })}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowFloorModal(false);
-                      setFloorForm({ floorNumber: '', name: '', description: '' });
-                    }}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    Create Floor
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Add Component Modal */}
-        {showComponentModal && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => {
-              setShowComponentModal(false);
-              setComponentForm({ room: '', type: '', name: '', serialNumber: '', quantity: 1, isWorking: true, notes: '' });
-            }}
-          >
-            <div 
-              className="bg-white rounded-lg p-6 w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-slate-800">Add New Component</h3>
-                <button
-                  onClick={() => {
-                    setShowComponentModal(false);
-                    setComponentForm({ room: '', type: '', name: '', serialNumber: '', quantity: 1, isWorking: true, notes: '' });
-                  }}
-                  className="text-slate-500 hover:text-slate-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <form onSubmit={handleCreateComponent} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Room *</label>
-                  <select
-                    value={componentForm.room}
-                    onChange={(e) => setComponentForm({ ...componentForm, room: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Select a room</option>
-                    {rooms.map((room) => (
-                      <option key={room._id} value={room._id}>
-                        {room.name} - Floor {room.floor?.floorNumber || 'N/A'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Type *</label>
-                  <select
-                    value={componentForm.type}
-                    onChange={(e) => setComponentForm({ ...componentForm, type: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Select component type</option>
-                    <option value="camera">Camera</option>
-                    <option value="datashow">Datashow/Projector</option>
-                    <option value="whiteboard">Whiteboard</option>
-                    <option value="microphone">Microphone</option>
-                    <option value="screen">Screen</option>
-                    <option value="speaker">Speaker</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Component Name *</label>
-                  <input
-                    type="text"
-                    value={componentForm.name}
-                    onChange={(e) => setComponentForm({ ...componentForm, name: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Serial Number</label>
-                  <input
-                    type="text"
-                    value={componentForm.serialNumber}
-                    onChange={(e) => setComponentForm({ ...componentForm, serialNumber: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
-                  <input
-                    type="number"
-                    value={componentForm.quantity}
-                    onChange={(e) => setComponentForm({ ...componentForm, quantity: parseInt(e.target.value) || 1 })}
-                    required
-                    min="1"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={componentForm.isWorking}
-                      onChange={(e) => setComponentForm({ ...componentForm, isWorking: e.target.checked })}
-                      className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-                    />
-                    <span className="text-sm font-medium text-slate-700">Is Working</span>
-                  </label>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                  <textarea
-                    value={componentForm.notes}
-                    onChange={(e) => setComponentForm({ ...componentForm, notes: e.target.value })}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowComponentModal(false);
-                      setComponentForm({ room: '', type: '', name: '', serialNumber: '', quantity: 1, isWorking: true, notes: '' });
-                    }}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    Create Component
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
         </main>
       </div>
+
+      {/* Modals - Now using separate components */}
+      <AddRoomForm
+        showModal={showRoomModal}
+        onClose={() => setShowRoomModal(false)}
+        onSuccess={fetchAdminData}
+      />
+
+      <AddFloorForm
+        showModal={showFloorModal}
+        onClose={() => setShowFloorModal(false)}
+        onSuccess={fetchAdminData}
+      />
+
+      <AddComponentForm
+        showModal={showComponentModal}
+        onClose={() => setShowComponentModal(false)}
+        onSuccess={fetchAdminData}
+      />
     </div>
   );
 }

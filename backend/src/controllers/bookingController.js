@@ -10,7 +10,15 @@ export const getBookings = async (req, res) => {
 
     const bookings = await Booking.find(filter)
       .populate("hr", "name email role")
-      .populate("room", "name floor code");
+      .populate({
+        path: "room",
+        select: "name floor code",
+        populate: {
+          path: "floor",
+          model: "Floor",
+          select: "name floorNumber"
+        }
+      });
     res.status(200).json(bookings);
   } catch (err) {
     res.status(500).json({ message: err.message });
