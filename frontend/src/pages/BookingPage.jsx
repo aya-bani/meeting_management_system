@@ -223,7 +223,7 @@ function BookingPage() {
     if (!window.confirm("Cancel this booking?")) return;
 
     try {
-      await bookingService.updateBooking(bookingId, { status: "cancelled" });
+      await bookingService.cancelBooking(bookingId);
       setSuccess("Booking cancelled");
       fetchMyBookings();
     } catch (err) {
@@ -513,7 +513,7 @@ function BookingPage() {
                           className={`px-2 py-1 rounded text-sm ${
                             b.status === "booked"
                               ? "bg-green-100 text-green-800"
-                              : b.status === "cancelled"
+                              : b.status === "canceled"
                               ? "bg-red-100 text-red-800"
                               : "bg-gray-100 text-gray-800"
                           }`}

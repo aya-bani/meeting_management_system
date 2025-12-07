@@ -1,9 +1,28 @@
 // frontend/src/components/HRSidebar.jsx
+import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import { authService } from '../services/authService';
+import { notificationService } from '../services/notificationService';
 
 function HRSidebar() {
   const user = authService.getCurrentUser();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const count = await notificationService.getUnreadCount();
+      setUnreadCount(count);
+    } catch (err) {
+      console.error('Failed to fetch unread count:', err);
+    }
+  };
 
   const menuItems = [
     {
@@ -41,6 +60,16 @@ function HRSidebar() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-1.414-1.414L12 9.172 7.05 4.222 5.636 5.636 10.586 10.586 5.636 15.536l1.414 1.414L12 12l4.95 4.95 1.414-1.414L13.414 10.586 18.364 5.636z" />
         </svg>
       ),
+    },
+    {
+      label: 'Notifications',
+      path: '/hr/notifications',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+      ),
+      badge: unreadCount,
     },
   ];
 

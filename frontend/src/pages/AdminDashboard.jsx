@@ -58,7 +58,7 @@ function AdminDashboard() {
       setComponents(componentsData);
 
       const activeBookings = bookingsData.filter(
-        b => new Date(b.endTime) > new Date() && b.status !== 'cancelled'
+        b => new Date(b.endTime) > new Date() && b.status !== 'canceled'
       );
 
       const pendingBookings = bookingsData.filter(b => b.status === 'pending');
@@ -101,7 +101,7 @@ function AdminDashboard() {
     setError('');
     setSuccess('');
     try {
-      await bookingService.updateBooking(bookingId, { status: 'cancelled' });
+      await bookingService.cancelBooking(bookingId);
       setSuccess('Booking cancelled successfully!');
       fetchAdminData();
       setTimeout(() => setSuccess(''), 3000);

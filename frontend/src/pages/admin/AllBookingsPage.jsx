@@ -213,7 +213,7 @@ function AllBookingsPage() {
                           className={`px-2 py-1 rounded text-xs font-semibold ${
                             b.status === "booked"
                               ? "bg-green-100 text-green-800"
-                              : b.status === "cancelled"
+                              : b.status === "canceled"
                               ? "bg-red-100 text-red-800"
                               : "bg-gray-100 text-gray-800"
                           }`}

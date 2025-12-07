@@ -40,7 +40,7 @@ function HRDashboard() {
 
       // Filter upcoming bookings
       const upcoming = myBookingsData.filter(
-        b => new Date(b.startTime) > new Date() && b.status !== 'cancelled'
+        b => new Date(b.startTime) > new Date() && b.status !== 'canceled'
       );
 
       // Get currently active bookings to determine available rooms

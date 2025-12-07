@@ -11,6 +11,7 @@ import roomRoutes from "./src/routes/roomRoutes.js";
 import floorRoutes from "./src/routes/floorRoutes.js";
 import componentRoutes from "./src/routes/componentRoutes.js";
 import reportRoutes from "./src/routes/reportRoutes.js";
+import notificationRoutes from "./src/routes/notificationRoutes.js";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/floors", floorRoutes);
 app.use("/api/components", componentRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {

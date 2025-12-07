@@ -83,16 +83,28 @@ function Sidebar({ menuItems, user }) {
               <button
                 key={index}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 relative ${
                   active
                     ? 'bg-indigo-600 text-white shadow-lg'
                     : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                 }`}
                 title={!isOpen ? item.label : ''}
               >
-                <span className="flex-shrink-0">{item.icon}</span>
+                <span className="flex-shrink-0 relative">
+                  {item.icon}
+                  {item.badge && item.badge > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
+                </span>
                 {isOpen && (
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                )}
+                {isOpen && item.badge && item.badge > 0 && (
+                  <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                    {item.badge > 9 ? '9+' : item.badge}
+                  </span>
                 )}
               </button>
             );

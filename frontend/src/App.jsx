@@ -13,6 +13,7 @@ import ComponentsPage from './pages/admin/ComponentsPage';
 import FloorsPage from './pages/admin/FloorsPage';
 import ReportsPage from './pages/admin/ReportsPage';
 import ComponentReport from './pages/hrmanager/ComponentReport';
+import NotificationsPage from './pages/NotificationsPage';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -183,6 +184,24 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'administrator']}>
               <AllBookingsPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/notifications" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'administrator']}>
+              <NotificationsPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/hr/notifications" 
+          element={
+            <ProtectedRoute allowedRoles={['hr']}>
+              <NotificationsPage />
             </ProtectedRoute>
           } 
         />

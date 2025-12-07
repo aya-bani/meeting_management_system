@@ -15,7 +15,7 @@ function RecentBookings({ bookings, onAcceptBooking, onCancelBooking }) {
         text: 'text-amber-800',
         dot: 'bg-amber-500',
       },
-      cancelled: {
+      canceled: {
         bg: 'bg-red-100',
         text: 'text-red-800',
         dot: 'bg-red-500',
@@ -150,7 +150,7 @@ function RecentBookings({ bookings, onAcceptBooking, onCancelBooking }) {
                             Accept
                           </button>
                         )}
-                        {booking.status !== 'cancelled' && (
+                        {booking.status !== 'canceled' && (
                           <button
                             onClick={() => onCancelBooking(booking._id)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs font-medium shadow-sm hover:shadow"

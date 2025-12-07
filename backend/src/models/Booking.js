@@ -11,8 +11,9 @@ const bookingSchema = new Schema(
     endTime: { type: String, required: true }, 
     purpose: { type: String, default: "" },
     attendeesCount: { type: Number, default: 0 },
-    status: { type: String, enum: ["booked", "cancelled"], default: "booked" },
+    status: { type: String, enum: ["booked", "canceled"], default: "booked" },
     createdBy: { type: Types.ObjectId, ref: "User" },
+    canceledBy: { type: String, enum: ["admin", "user"], default: null },
   },
   { timestamps: true }
 );
@@ -29,19 +30,7 @@ bookingSchema.statics.isRoomAvailable = async function (roomId, date, startTime,
   const e = toMinutes(endTime);
   if (e <= s) throw new Error("endTime must be after startTime");
 
-  const query = {
-    room: roomId,
-    date,
-    status: "booked",
-    $expr: {
-
-      $and: [
-        { $lt: [{ $toInt: { $multiply: [{ $toInt: { $substr: ["$startTime", 0, 2] } }, 60] } }, 0] } 
-      ],
-    },
-  };
-
-
+  // Find all existing bookings for this room on this date
   const candidates = await this.find({
     room: roomId,
     date,
@@ -49,9 +38,11 @@ bookingSchema.statics.isRoomAvailable = async function (roomId, date, startTime,
     ...(excludeBookingId ? { _id: { $ne: excludeBookingId } } : {}),
   }).lean();
 
+  // Check for time overlaps
   const overlaps = candidates.some((b) => {
     const bs = toMinutes(b.startTime);
     const be = toMinutes(b.endTime);
+    // Overlap occurs if: not (end <= start OR start >= end)
     return !(be <= s || bs >= e);
   });
 
