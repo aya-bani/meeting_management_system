@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { FiLayers } from "react-icons/fi";
 import AdminSidebar from "../../components/AdminSidebar";
 import { floorService } from "../../services/floorService";
 
@@ -27,60 +27,62 @@ function FloorsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-gray-50">
       <AdminSidebar />
 
       <div className="flex-1 ml-64 p-6">
-        <header className="bg-indigo-600 text-white p-4 rounded shadow mb-6">
-          <h1 className="text-2xl font-bold">Floors</h1>
-          <p className="text-indigo-100 text-sm mt-1">
-            View all floors configured for meeting rooms.
-          </p>
-        </header>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Floors</h1>
+          <p className="text-gray-500 text-sm">Manage building floors</p>
+        </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 p-3 mb-4 rounded">
+          <div className="bg-red-100 border border-red-400 text-red-700 p-3 mb-6 rounded">
             {error}
           </div>
         )}
 
-        <div className="bg-white rounded shadow p-4">
+        <div className="bg-white rounded-lg shadow-sm p-6">
           {loading ? (
-            <p className="text-gray-500">Loading floors...</p>
+            <div className="flex justify-center items-center h-40">
+              <p className="text-gray-500">Loading floors...</p>
+            </div>
           ) : floors.length === 0 ? (
-            <p className="text-gray-500">No floors found.</p>
+            <div className="text-center py-10">
+              <p className="text-gray-500">No floors found.</p>
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Number
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {floors.map((f) => (
-                    <tr key={f._id}>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        {f.name}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                        {f.number ?? "-"}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 max-w-xs truncate">
-                        {f.description || "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {floors.map((floor, index) => (
+                <div key={floor._id} className="relative p-5 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
+                  <div className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full text-sm font-medium">
+                    {index}
+                  </div>
+                  <div className="flex items-center mb-4">
+                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                      <FiLayers className="w-5 h-5" />
+                    </div>
+                    <h3 className="ml-3 text-lg font-semibold text-gray-800">{floor.name}</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-500">Rooms</p>
+                      <p className="text-gray-700">
+                        {floor.rooms?.length || 0} rooms
+                        <span className="ml-2 text-sm text-green-600">
+                          {floor.rooms?.filter(r => r.status === 'available').length || 0} available
+                        </span>
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Capacity</p>
+                      <p className="text-gray-700">
+                        {floor.rooms?.reduce((sum, room) => sum + (room.capacity || 0), 0) || 0} total seats
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

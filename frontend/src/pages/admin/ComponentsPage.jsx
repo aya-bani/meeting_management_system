@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-
+import { FiCpu, FiHardDrive, FiMonitor, FiPrinter, FiWifi, FiServer, FiTool } from "react-icons/fi";
 import AdminSidebar from "../../components/AdminSidebar";
 import { componentService } from "../../services/componentService";
 import { roomService } from "../../services/roomService";
@@ -14,7 +14,80 @@ function ComponentsPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [roomFilter, setRoomFilter] = useState("");
   const [floorFilter, setFloorFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
+  // Get component icon based on type
+  const getComponentIcon = (type) => {
+    const typeLower = type?.toLowerCase() || '';
+    switch (typeLower) {
+      case 'projector':
+      case 'datashow':
+        return <FiMonitor className="w-5 h-5" />;
+      case 'computer':
+      case 'laptop':
+        return <FiCpu className="w-5 h-5" />;
+      case 'printer':
+        return <FiPrinter className="w-5 h-5" />;
+      case 'storage':
+        return <FiHardDrive className="w-5 h-5" />;
+      case 'server':
+        return <FiServer className="w-5 h-5" />;
+      case 'network':
+      case 'wifi':
+        return <FiWifi className="w-5 h-5" />;
+      default:
+        return <FiTool className="w-5 h-5" />;
+    }
+  };
+
+  // Helper function to get room and floor info for a component
+  const getComponentLocation = useCallback((component) => {
+    let roomId, roomName, floorId, floorName;
+
+    // Get room info
+    if (component.room && typeof component.room === "object") {
+      roomId = component.room._id;
+      roomName = component.room.name || "Unknown Room";
+      
+      // Get floor info from room
+      if (component.room.floor && typeof component.room.floor === "object") {
+        floorId = component.room.floor._id;
+        floorName = component.room.floor.name || "Unknown Floor";
+      } else if (component.room.floor) {
+        floorId = component.room.floor;
+        const floor = floors.find((f) => f._id === floorId);
+        floorName = floor ? floor.name : "Unknown Floor";
+      }
+    } else if (component.room) {
+      roomId = component.room;
+      const room = rooms.find((r) => r._id === roomId);
+      roomName = room ? room.name : "Unknown Room";
+      
+      // Get floor info if available in room
+      if (room?.floor) {
+        if (typeof room.floor === "object") {
+          floorId = room.floor._id;
+          floorName = room.floor.name || "Unknown Floor";
+        } else {
+          floorId = room.floor;
+          const floor = floors.find((f) => f._id === floorId);
+          floorName = floor ? floor.name : "Unknown Floor";
+        }
+      }
+    }
+
+    return {
+      roomId,
+      roomName,
+      floorId,
+      floorName,
+      displayName: roomName ? 
+        (floorName ? `${roomName} (${floorName})` : roomName) : 
+        (floorName ? `Floor: ${floorName}` : 'Unassigned')
+    };
+  }, [floors, rooms]);
+
+  // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -41,384 +114,278 @@ function ComponentsPage() {
     fetchData();
   }, []);
 
-  // Helper function to get room and floor info for a component
-  const getComponentLocation = useCallback((component) => {
-    let roomId, roomName, floorId, floorName;
-
-    // Get room info
-    if (component.room && typeof component.room === "object") {
-      roomId = component.room._id;
-      roomName = component.room.name || "Unknown Room";
-      // Check if room has floor populated
-      if (component.room.floor && typeof component.room.floor === "object") {
-        floorId = component.room.floor._id;
-        floorName = component.room.floor.name || "Unknown Floor";
-      } else {
-        // Find floor from rooms array
-        const room = rooms.find((r) => r._id === roomId);
-        if (room) {
-          const roomFloorId = room.floor && typeof room.floor === "object" 
-            ? room.floor._id 
-            : room.floor;
-          floorId = roomFloorId;
-          const floor = floors.find((f) => f._id === roomFloorId);
-          floorName = floor ? floor.name : "Unknown Floor";
-        } else {
-          floorId = "unknown";
-          floorName = "Unknown Floor";
-        }
-      }
-    } else {
-      roomId = component.room;
-      const room = rooms.find((r) => r._id === roomId);
-      if (room) {
-        roomName = room.name || "Unknown Room";
-        const roomFloorId = room.floor && typeof room.floor === "object" 
-          ? room.floor._id 
-          : room.floor;
-        floorId = roomFloorId;
-        const floor = floors.find((f) => f._id === roomFloorId);
-        floorName = floor ? floor.name : "Unknown Floor";
-      } else {
-        roomName = "Unknown Room";
-        floorId = "unknown";
-        floorName = "Unknown Floor";
-      }
-    }
-
-    return { roomId, roomName, floorId, floorName };
-  }, [rooms, floors]);
-
-  // Filter components by type, room, and floor
-  const filteredComponents = components.filter((component) => {
-    // Filter by type
-    if (typeFilter && component.type !== typeFilter) {
-      return false;
-    }
-
-    // Get component location
-    const { roomId, floorId } = getComponentLocation(component);
-
-    // Filter by room
-    if (roomFilter && roomId !== roomFilter) {
-      return false;
-    }
-
-    // Filter by floor
-    if (floorFilter && floorId !== floorFilter) {
-      return false;
-    }
-
-    return true;
-  });
-
-  // Group components by floor -> room
-  const groupedData = useMemo(() => {
-    const grouped = {};
-
-    filteredComponents.forEach((component) => {
-      const { roomId, roomName, floorId, floorName } = getComponentLocation(component);
-
-      if (!grouped[floorId]) {
-        grouped[floorId] = {
-          floorId,
-          floorName,
-          rooms: {},
-        };
-      }
-
-      if (!grouped[floorId].rooms[roomId]) {
-        grouped[floorId].rooms[roomId] = {
-          roomId,
-          roomName,
-          components: [],
-        };
-      }
-
-      grouped[floorId].rooms[roomId].components.push(component);
-    });
-
-    const floorArray = Object.values(grouped);
-    floorArray.sort((a, b) => a.floorName.localeCompare(b.floorName));
-    
-    return floorArray.map((floorGroup) => {
-      const roomArray = Object.values(floorGroup.rooms);
-      roomArray.sort((a, b) => a.roomName.localeCompare(b.roomName));
+  // Filter components based on selected filters
+  const filteredComponents = useMemo(() => {
+    return components.filter(component => {
+      const location = getComponentLocation(component);
       
-      const processedRooms = roomArray.map((roomGroup) => {
-        const sortedComponents = [...roomGroup.components];
-        sortedComponents.sort((a, b) => a.name.localeCompare(b.name));
-        return {
-          ...roomGroup,
-          components: sortedComponents,
-        };
-      });
+      const matchesType = !typeFilter || 
+        (component.type && component.type.toLowerCase().includes(typeFilter.toLowerCase()));
       
-      return {
-        ...floorGroup,
-        rooms: processedRooms,
-      };
+      const matchesRoom = !roomFilter || 
+        (location.roomName && location.roomName.toLowerCase().includes(roomFilter.toLowerCase()));
+      
+      const matchesFloor = !floorFilter || 
+        (location.floorId && location.floorId === floorFilter);
+      
+      const matchesStatus = !statusFilter || 
+        (component.status && component.status.toLowerCase() === statusFilter.toLowerCase());
+      
+      return matchesType && matchesRoom && matchesFloor && matchesStatus;
     });
-  }, [filteredComponents, getComponentLocation]);
+  }, [components, typeFilter, roomFilter, floorFilter, statusFilter, getComponentLocation]);
 
-  const getStatusColor = (isWorking) => {
-    return isWorking
-      ? "bg-green-100 text-green-800"
-      : "bg-red-100 text-red-800";
-  };
+  // Get unique component types for filter dropdown
+  const componentTypes = useMemo(() => {
+    const types = new Set();
+    components.forEach(comp => {
+      if (comp.type) {
+        types.add(comp.type);
+      }
+    });
+    return Array.from(types).sort();
+  }, [components]);
 
-  const getTypeColor = (type) => {
-    const colors = {
-      camera: "bg-blue-100 text-blue-800",
-      datashow: "bg-purple-100 text-purple-800",
-      whiteboard: "bg-gray-100 text-gray-800",
-      microphone: "bg-pink-100 text-pink-800",
-      screen: "bg-indigo-100 text-indigo-800",
-      speaker: "bg-yellow-100 text-yellow-800",
-      other: "bg-gray-100 text-gray-800",
-    };
-    return colors[type] || colors.other;
+  // Clear all filters
+  const clearFilters = () => {
+    setTypeFilter('');
+    setRoomFilter('');
+    setFloorFilter('');
+    setStatusFilter('');
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-gray-50">
       <AdminSidebar />
-
       <div className="flex-1 ml-64 p-6">
-        <header className="bg-indigo-600 text-white p-4 rounded shadow mb-6">
-          <h1 className="text-2xl font-bold">Components</h1>
-          <p className="text-indigo-100 text-sm mt-1">
-            View all equipment/components organized by floor and room.
-          </p>
-        </header>
+        <div className="mb-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Components</h1>
+              <p className="text-gray-500 text-sm">
+                {filteredComponents.length} of {components.length} components
+              </p>
+            </div>
+            <button 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              onClick={() => { /* Add component functionality */ }}
+            >
+              Add Component
+            </button>
+          </div>
+        </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 p-3 mb-4 rounded">
+          <div className="bg-red-100 border border-red-400 text-red-700 p-3 mb-6 rounded">
             {error}
           </div>
         )}
 
-        {/* Filters */}
-        <div className="bg-white rounded shadow p-4 mb-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Filters</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Filter by Floor */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Floor
-              </label>
-              <select
-                value={floorFilter}
-                onChange={(e) => setFloorFilter(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Floors</option>
-                {floors.map((floor) => (
-                  <option key={floor._id} value={floor._id}>
-                    {floor.name}
+        {/* Quick Filters */}
+        <div className="mt-4 flex flex-wrap gap-2 mb-6">
+          <button 
+            className={`px-3 py-1 rounded-full text-sm font-medium ${
+              !typeFilter && !roomFilter && !floorFilter && !statusFilter 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            onClick={clearFilters}
+          >
+            All Components ({components.length})
+          </button>
+          
+          <button 
+            className={`px-3 py-1 rounded-full text-sm font-medium ${
+              statusFilter === 'working' 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            onClick={() => setStatusFilter(prev => prev === 'working' ? '' : 'working')}
+          >
+            Working ({components.filter(c => c.status === 'working').length})
+          </button>
+          
+          <button 
+            className={`px-3 py-1 rounded-full text-sm font-medium ${
+              statusFilter === 'maintenance' 
+                ? 'bg-yellow-100 text-yellow-700' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            onClick={() => setStatusFilter(prev => prev === 'maintenance' ? '' : 'maintenance')}
+          >
+            Maintenance ({components.filter(c => c.status === 'maintenance').length})
+          </button>
+          
+          <div className="ml-auto flex gap-2">
+            <select 
+              className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="">All Types</option>
+              {componentTypes.map(type => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            
+            <select 
+              className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white"
+              value={floorFilter}
+              onChange={(e) => {
+                setFloorFilter(e.target.value);
+                // Clear room filter when changing floor
+                if (e.target.value) setRoomFilter('');
+              }}
+            >
+              <option value="">All Floors</option>
+              {floors.map(floor => (
+                <option key={floor._id} value={floor._id}>
+                  {floor.name}
+                </option>
+              ))}
+            </select>
+            
+            <select 
+              className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white"
+              value={roomFilter}
+              onChange={(e) => setRoomFilter(e.target.value)}
+              disabled={!!floorFilter} // Disable if floor filter is active
+            >
+              <option value="">All Rooms</option>
+              {rooms
+                .filter(room => {
+                  // If floor filter is active, only show rooms from that floor
+                  if (floorFilter) {
+                    const roomFloorId = room.floor?._id || room.floor;
+                    return roomFloorId === floorFilter;
+                  }
+                  return true;
+                })
+                .map(room => (
+                  <option key={room._id} value={room._id}>
+                    {room.name}
                   </option>
                 ))}
-              </select>
-            </div>
-
-            {/* Filter by Room */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Room
-              </label>
-              <select
-                value={roomFilter}
-                onChange={(e) => setRoomFilter(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Rooms</option>
-                {rooms
-                  .filter((room) => {
-                    // If floor filter is set, only show rooms from that floor
-                    if (floorFilter) {
-                      const roomFloorId =
-                        room.floor && typeof room.floor === "object"
-                          ? room.floor._id
-                          : room.floor;
-                      return roomFloorId === floorFilter;
-                    }
-                    // Otherwise show all rooms
-                    return true;
-                  })
-                  .map((room) => {
-                    // Get floor name for display
-                    const roomFloorId =
-                      room.floor && typeof room.floor === "object"
-                        ? room.floor._id
-                        : room.floor;
-                    const floor = floors.find((f) => f._id === roomFloorId);
-                    const floorName = floor ? floor.name : "";
-                    
-                    return (
-                      <option key={room._id} value={room._id}>
-                        {room.name} {floorName && `(${floorName})`}
-                      </option>
-                    );
-                  })}
-              </select>
-            </div>
-
-            {/* Filter by Component Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Component Type
-              </label>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Types</option>
-                <option value="camera">Camera</option>
-                <option value="datashow">Datashow/Projector</option>
-                <option value="whiteboard">Whiteboard</option>
-                <option value="microphone">Microphone</option>
-                <option value="screen">Screen</option>
-                <option value="speaker">Speaker</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+            </select>
           </div>
-
-          {/* Clear Filters Button */}
-          {(typeFilter || roomFilter || floorFilter) && (
-            <div className="mt-4">
-              <button
-                onClick={() => {
-                  setTypeFilter("");
-                  setRoomFilter("");
-                  setFloorFilter("");
-                }}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm"
-              >
-                Clear All Filters
-              </button>
-            </div>
-          )}
         </div>
 
-        <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
           {loading ? (
-            <div className="bg-white rounded shadow p-4">
+            <div className="flex justify-center items-center h-40">
               <p className="text-gray-500">Loading components...</p>
             </div>
-          ) : groupedData.length === 0 ? (
-            <div className="bg-white rounded shadow p-4">
-              <p className="text-gray-500">No components found.</p>
+          ) : filteredComponents.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-gray-500">
+                {components.length === 0 
+                  ? 'No components found. Add your first component to get started.' 
+                  : 'No components match the selected filters.'}
+              </p>
+              {components.length > 0 && (
+                <button 
+                  className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  onClick={clearFilters}
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
           ) : (
-            groupedData.map((floorGroup) => (
-              <div key={floorGroup.floorId} className="bg-white rounded shadow overflow-hidden">
-                <div className="bg-indigo-50 border-b border-indigo-200 px-6 py-4">
-                  <h2 className="text-xl font-bold text-indigo-900">
-                    {floorGroup.floorName}
-                  </h2>
-                  <p className="text-sm text-indigo-700 mt-1">
-                    {Object.values(floorGroup.rooms).reduce(
-                      (sum, room) => sum + room.components.length,
-                      0
-                    )}{" "}
-                    components across {floorGroup.rooms.length}{" "}
-                    {floorGroup.rooms.length === 1 ? "room" : "rooms"}
-                  </p>
-                </div>
-
-                <div className="space-y-4 p-6">
-                  {floorGroup.rooms.map((roomGroup) => (
-                    <div
-                      key={roomGroup.roomId}
-                      className="border border-gray-200 rounded-lg overflow-hidden"
-                    >
-                      <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
-                        <h3 className="text-lg font-semibold text-gray-800">
-                          {roomGroup.roomName}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredComponents.map((component) => {
+                const location = getComponentLocation(component);
+                const isWorking = component.status === 'working';
+                const isMaintenance = component.status === 'maintenance';
+                
+                return (
+                  <div 
+                    key={component._id} 
+                    className="relative p-5 border border-gray-100 rounded-lg hover:shadow-md transition-shadow bg-white"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center">
+                        <div className={`p-2 rounded-lg ${
+                          isWorking 
+                            ? 'bg-green-50 text-green-600' 
+                            : isMaintenance 
+                              ? 'bg-yellow-50 text-yellow-600' 
+                              : 'bg-gray-50 text-gray-500'
+                        }`}>
+                          {getComponentIcon(component.type)}
+                        </div>
+                        <h3 className="ml-3 text-lg font-semibold text-gray-800">
+                          {component.name}
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {roomGroup.components.length}{" "}
-                          {roomGroup.components.length === 1
-                            ? "component"
-                            : "components"}
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        isWorking 
+                          ? 'bg-green-100 text-green-800' 
+                          : isMaintenance 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {component.status || 'unknown'}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Type</p>
+                        <p className="text-gray-700 capitalize">
+                          {component.type || 'N/A'}
                         </p>
                       </div>
-
-                      {roomGroup.components.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500 text-sm">
-                          No components in this room
+                      
+                      <div>
+                        <p className="text-sm text-gray-500">Location</p>
+                        <p className="text-gray-700">
+                          {location.roomName || 'Unassigned'}
+                          {location.floorName && (
+                            <span className="text-gray-500 text-sm ml-2">
+                              ({location.floorName})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      
+                      {component.serialNumber && (
+                        <div>
+                          <p className="text-sm text-gray-500">Serial Number</p>
+                          <p className="text-gray-700 font-mono text-sm">
+                            {component.serialNumber}
+                          </p>
                         </div>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Component Name
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Type
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Quantity
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Serial Number
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Status
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Notes
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              {roomGroup.components.map((component) => (
-                                <tr key={component._id} className="hover:bg-gray-50">
-                                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {component.name}
-                                  </td>
-                                  <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                    <span
-                                      className={`px-2 py-1 rounded text-xs font-semibold ${getTypeColor(
-                                        component.type
-                                      )}`}
-                                    >
-                                      {component.type || "N/A"}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                                    {component.quantity ?? 1}
-                                  </td>
-                                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                                    {component.serialNumber || "-"}
-                                  </td>
-                                  <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                    <span
-                                      className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(
-                                        component.isWorking
-                                      )}`}
-                                    >
-                                      {component.isWorking ? "Working" : "Not Working"}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                    {component.notes || "-"}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                      )}
+                      
+                      {component.model && (
+                        <div>
+                          <p className="text-sm text-gray-500">Model</p>
+                          <p className="text-gray-700 text-sm">{component.model}</p>
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))
+                    
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end space-x-2">
+                      <button 
+                        className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 hover:bg-blue-50 rounded"
+                        onClick={() => { /* Edit functionality */ }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="text-xs text-red-600 hover:text-red-800 px-2 py-1 hover:bg-red-50 rounded"
+                        onClick={() => { /* Delete functionality */ }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
