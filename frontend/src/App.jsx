@@ -12,6 +12,7 @@ import RoomsPage from './pages/admin/RoomsPage';
 import ComponentsPage from './pages/admin/ComponentsPage';
 import FloorsPage from './pages/admin/FloorsPage';
 import ReportsPage from './pages/admin/ReportsPage';
+import MeetingSummaryReport from './pages/admin/MeetingSummaryReport';
 import ComponentReport from './pages/hrmanager/ComponentReport';
 import NotificationsPage from './pages/NotificationsPage';
 
@@ -175,6 +176,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'administrator']}>
               <ReportsPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/meeting-summary" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'administrator']}>
+              <MeetingSummaryReport />
             </ProtectedRoute>
           } 
         />

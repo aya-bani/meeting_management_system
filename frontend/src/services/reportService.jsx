@@ -36,4 +36,16 @@ export const reportService = {
     const response = await api.put(`/reports/${id}`, reportData);
     return response.data;
   },
+
+  // Get meeting summary report
+  getMeetingSummary: async (filters) => {
+    const params = {};
+    if (filters?.startDate) params.startDate = filters.startDate;
+    if (filters?.endDate) params.endDate = filters.endDate;
+    if (filters?.status) params.status = filters.status;
+    if (filters?.roomId) params.roomId = filters.roomId;
+    
+    const response = await api.get('/reports/meeting-summary', { params });
+    return response.data;
+  },
 };
