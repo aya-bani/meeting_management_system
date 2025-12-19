@@ -12,6 +12,8 @@ import AddComponentForm from '../components/admin/AddComponentForm';
 import SystemOverview from '../components/admin/SystemOverview';
 import ManageComponents from '../components/admin/ManageComponents';
 import RecentBookings from '../components/admin/RecentBookings';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
 
 function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -175,29 +177,23 @@ function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <AdminSidebar />
-      <div className="flex-1 ml-64">
-        {/* Header */}
-        <header className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-black opacity-5"></div>
-          <div className="relative px-8 py-8">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-4xl font-bold text-white mb-2">Admin Dashboard</h1>
-                <p className="text-indigo-100 text-lg">System Overview & Management</p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-semibold border border-white/30">
-                  Administrator
-                </span>
-              </div>
-            </div>
-          </div>
-        </header>
+      <div className="flex-1 ml-64 flex flex-col min-h-screen">
+        <PageHeader
+          title="Admin Dashboard"
+          description="Central overview of bookings, rooms, and system health."
+          actions={
+            <>
+              <span className="hidden md:inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                Administrator
+              </span>
+            </>
+          }
+        />
 
-        <main className="px-8 py-8 bg-gradient-to-b from-slate-50 to-white min-h-screen">
+        <main className="px-8 py-6 flex-1 space-y-6">
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg shadow-sm flex items-center gap-3">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2">
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -207,13 +203,40 @@ function AdminDashboard() {
           
           {/* Success Message */}
           {success && (
-            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg shadow-sm flex items-center gap-3">
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center gap-2">
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>{success}</span>
             </div>
           )}
+
+          {/* Quick admin actions */}
+          <section className="mb-4">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => setShowRoomModal(true)}
+              >
+                Add Room
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setShowFloorModal(true)}
+              >
+                Add Floor
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setShowComponentModal(true)}
+              >
+                Add Component
+              </Button>
+            </div>
+          </section>
 
           {/* System Overview Component */}
           <SystemOverview stats={stats} />
