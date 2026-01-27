@@ -17,7 +17,6 @@ function HRDashboard() {
   });
   const [upcomingBookings, setUpcomingBookings] = useState([]);
   const [availableRooms, setAvailableRooms] = useState([]);
-  const [allBookings, setAllBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -70,17 +69,11 @@ function HRDashboard() {
 
       setUpcomingBookings(upcoming.slice(0, 5));
       setAvailableRooms(roomsWithComponents);
-      setAllBookings(allBookingsData);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/login');
   };
 
   if (loading) {
@@ -128,7 +121,7 @@ function HRDashboard() {
           <h2 className="text-xl font-semibold text-slate-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
-              onClick={() => navigate('/bookings')}
+              onClick={() => navigate('/bookings?view=create')}
               className="bg-slate-50 p-6 rounded-lg shadow hover:shadow-md transition text-left"
             >
               <div className="flex items-center">
@@ -145,7 +138,7 @@ function HRDashboard() {
             </button>
 
             <button
-              onClick={() => navigate('/bookings')}
+              onClick={() => navigate('/bookings?view=my')}
               className="bg-slate-50 p-6 rounded-lg shadow hover:shadow-md transition text-left"
             >
               <div className="flex items-center">
@@ -216,7 +209,7 @@ function HRDashboard() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-slate-900">Available Rooms & Components</h2>
             <button
-              onClick={() => navigate('/bookings')}
+              onClick={() => navigate('/bookings?view=create')}
               className="text-indigo-600 hover:text-indigo-800 font-medium"
             >
               Book a Room →
@@ -304,7 +297,7 @@ function HRDashboard() {
                 </svg>
                 <p className="text-lg font-medium">No bookings yet</p>
                 <button
-                  onClick={() => navigate('/bookings')}
+                  onClick={() => navigate('/bookings?view=create')}
                   className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
                 >
                   Book a Room

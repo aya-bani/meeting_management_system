@@ -68,11 +68,11 @@ function AddRoomForm({ showModal, onClose, onSuccess }) {
 
   return (
     <div
-      className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-transparent flex items-center justify-center z-50"
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-lg p-6 w-full max-w-md"
+        className="bg-white border border-slate-200 rounded-xl shadow-xl p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">

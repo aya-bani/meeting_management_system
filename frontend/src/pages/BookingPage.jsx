@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import { bookingService } from "../services/bookingServices";
 import { roomService } from "../services/roomService";
@@ -11,7 +11,7 @@ import AdminSidebar from "../components/AdminSidebar";
 import HRSidebar from "../components/HRSidebar";
 
 function BookingPage() {
-  const navigate = useNavigate();
+  const location = useLocation();
 
   // Logged user
   const [user, setUser] = useState(null);
@@ -37,7 +37,6 @@ function BookingPage() {
 
   // UI state
   const [selectedFloor, setSelectedFloor] = useState("");
-  const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedComponents, setSelectedComponents] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -48,6 +47,18 @@ function BookingPage() {
     setUser(currentUser);
     fetchInitialData();
   }, []);
+
+  // Sync initial tab with ?view=create|my query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || "");
+    const view = params.get("view");
+
+    if (view === "my") {
+      setActiveTab("my-bookings");
+    } else if (view === "create") {
+      setActiveTab("create");
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (activeTab === "my-bookings") {
@@ -137,13 +148,8 @@ function BookingPage() {
   // Form changes
   const handleInput = (e) => {
     const { name, value } = e.target;
-    console.log('Form input changed:', name, value);
+    console.log("Form input changed:", name, value);
     setFormData({ ...formData, [name]: value });
-    
-    // Update selectedRoom when room is changed
-    if (name === 'room') {
-      setSelectedRoom(value);
-    }
   };
 
   // Validate time (HH:mm)
@@ -283,16 +289,6 @@ function BookingPage() {
         {/* CREATE BOOKING */}
         {activeTab === "create" && (
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow">
-            {/* Debug Info - Remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
-                <p><strong>Debug Info:</strong></p>
-                <p>Total Rooms: {allRooms.length}</p>
-                <p>Filtered Rooms: {rooms.length}</p>
-                <p>Selected Floor: {selectedFloor || 'None'}</p>
-              </div>
-            )}
-
             {/* Floor selection */}
             <div className="mb-6">
               <label className="block font-medium mb-2 text-gray-700">

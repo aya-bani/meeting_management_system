@@ -9,20 +9,20 @@ function HRSidebar() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await notificationService.getUnreadCount();
+        setUnreadCount(count);
+      } catch (err) {
+        console.error('Failed to fetch unread count:', err);
+      }
+    };
+
     fetchUnreadCount();
     // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  const fetchUnreadCount = async () => {
-    try {
-      const count = await notificationService.getUnreadCount();
-      setUnreadCount(count);
-    } catch (err) {
-      console.error('Failed to fetch unread count:', err);
-    }
-  };
 
   const menuItems = [
     {
@@ -36,7 +36,7 @@ function HRSidebar() {
     },
     {
       label: 'Book a Room',
-      path: '/bookings',
+      path: '/hr/book-room',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -45,7 +45,7 @@ function HRSidebar() {
     },
     {
       label: 'My Bookings',
-      path: '/bookings',
+      path: '/hr/my-bookings',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

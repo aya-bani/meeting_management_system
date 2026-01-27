@@ -4,6 +4,7 @@ import { authService } from './services/authService';
 
 // Pages
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import HRDashboard from './pages/HRDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import BookingPage from './pages/BookingPage';
@@ -13,6 +14,8 @@ import ComponentsPage from './pages/admin/ComponentsPage';
 import FloorsPage from './pages/admin/FloorsPage';
 import ReportsPage from './pages/admin/ReportsPage';
 import ComponentReport from './pages/hrmanager/ComponentReport';
+import MyBookingsPage from './pages/hrmanager/MyBookingsPage';
+import HRBookingPage from './pages/hrmanager/hrBookingPage';
 import NotificationsPage from './pages/NotificationsPage';
 
 // Protected Route Component
@@ -92,6 +95,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Dashboard Route - Redirects based on role */}
@@ -118,6 +122,22 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['hr']}>
               <ComponentReport />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/hr/my-bookings" 
+          element={
+            <ProtectedRoute allowedRoles={['hr']}>
+              <MyBookingsPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/hr/book-room" 
+          element={
+            <ProtectedRoute allowedRoles={['hr']}>
+              <HRBookingPage />
             </ProtectedRoute>
           } 
         />

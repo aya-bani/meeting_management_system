@@ -14,7 +14,26 @@ function Sidebar({ menuItems, user }) {
   };
 
   const isActive = (path) => {
-    return location.pathname === path;
+    if (!path) return false;
+
+    // Support optional query parameters in menu item paths
+    const [basePath, queryString] = path.split("?");
+
+    if (location.pathname !== basePath) return false;
+
+    // If no query specified on the item, match any query for that path
+    if (!queryString) return true;
+
+    const currentParams = new URLSearchParams(location.search || "");
+    const targetParams = new URLSearchParams(queryString);
+
+    for (const [key, value] of targetParams.entries()) {
+      if (currentParams.get(key) !== value) {
+        return false;
+      }
+    }
+
+    return true;
   };
 
   return (

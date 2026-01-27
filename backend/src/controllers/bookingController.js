@@ -3,6 +3,20 @@ import Booking from "../models/Booking.js";
 import User from "../models/User.js";
 import { notifyAdmins, notifyHR } from "../utils/notificationService.js";
 
+// Shared populate configuration for booking queries
+const bookingPopulate = [
+  { path: "hr", select: "name email role" },
+  {
+    path: "room",
+    select: "name floor code",
+    populate: {
+      path: "floor",
+      model: "Floor",
+      select: "name floorNumber",
+    },
+  },
+];
+
 // @desc Get bookings (optionally by room or hr)
 export const getBookings = async (req, res) => {
   try {
@@ -11,19 +25,28 @@ export const getBookings = async (req, res) => {
     if (req.query.hr) filter.hr = req.query.hr;
 
     const bookings = await Booking.find(filter)
-      .populate("hr", "name email role")
-      .populate({
-        path: "room",
-        select: "name floor code",
-        populate: {
-          path: "floor",
-          model: "Floor",
-          select: "name floorNumber"
-        }
-      });
+      .populate(bookingPopulate)
+      .sort({ date: 1, startTime: 1, createdAt: -1 });
+
     res.status(200).json(bookings);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc Get bookings for the currently authenticated HR user
+export const getMyBookings = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const bookings = await Booking.find({ hr: userId })
+      .populate(bookingPopulate)
+      .sort({ date: 1, startTime: 1, createdAt: -1 });
+
+    return res.status(200).json(bookings);
+  } catch (err) {
+    console.error("Error fetching user bookings:", err);
+    return res.status(500).json({ message: err.message || "Failed to fetch bookings" });
   }
 };
 

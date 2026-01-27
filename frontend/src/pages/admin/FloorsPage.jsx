@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FiLayers } from "react-icons/fi";
 import AdminSidebar from "../../components/AdminSidebar";
 import { floorService } from "../../services/floorService";
+import FloorPreview from "../../components/floorplan/FloorPreview";
 
 function FloorsPage() {
   const [floors, setFloors] = useState([]);
@@ -54,30 +55,47 @@ function FloorsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {floors.map((floor, index) => (
-                <div key={floor._id} className="relative p-5 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
+                <div
+                  key={floor._id}
+                  className="relative p-5 border border-gray-100 rounded-lg hover:shadow-md transition-shadow"
+                >
                   <div className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full text-sm font-medium">
-                    {index}
+                    {index + 1}
                   </div>
-                  <div className="flex items-center mb-4">
+
+                  <div className="flex items-center mb-3">
                     <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
                       <FiLayers className="w-5 h-5" />
                     </div>
-                    <h3 className="ml-3 text-lg font-semibold text-gray-800">{floor.name}</h3>
+                    <h3 className="ml-3 text-lg font-semibold text-gray-800">
+                      {floor.name}
+                    </h3>
                   </div>
+
+                  {/* SVG floor plan preview */}
+                  <div className="mb-4 h-40 w-full overflow-hidden rounded-md bg-gray-50">
+                    <FloorPreview roomCount={floor.rooms?.length || 0} />
+                  </div>
+
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm text-gray-500">Rooms</p>
                       <p className="text-gray-700">
                         {floor.rooms?.length || 0} rooms
                         <span className="ml-2 text-sm text-green-600">
-                          {floor.rooms?.filter(r => r.status === 'available').length || 0} available
+                          {floor.rooms?.filter((r) => r.status === "available").length || 0}{" "}
+                          available
                         </span>
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Capacity</p>
                       <p className="text-gray-700">
-                        {floor.rooms?.reduce((sum, room) => sum + (room.capacity || 0), 0) || 0} total seats
+                        {floor.rooms?.reduce(
+                          (sum, room) => sum + (room.capacity || 0),
+                          0
+                        ) || 0}{" "}
+                        total seats
                       </p>
                     </div>
                   </div>
