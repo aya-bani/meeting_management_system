@@ -3,11 +3,14 @@ import { FiLayers } from "react-icons/fi";
 import AdminSidebar from "../../components/AdminSidebar";
 import { floorService } from "../../services/floorService";
 import FloorPreview from "../../components/floorplan/FloorPreview";
+import FloorPlanModal from "../../components/floorplan/FloorPlanModal";
 
 function FloorsPage() {
   const [floors, setFloors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedFloor, setSelectedFloor] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchFloors = async () => {
@@ -72,9 +75,16 @@ function FloorsPage() {
                     </h3>
                   </div>
 
-                  {/* SVG floor plan preview */}
-                  <div className="mb-4 h-40 w-full overflow-hidden rounded-md bg-gray-50">
-                    <FloorPreview roomCount={floor.rooms?.length || 0} />
+                  {/* Floor plan preview - clickable */}
+                  <div
+                    className="mb-4 h-40 w-full overflow-hidden rounded-md bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors border-2 border-transparent hover:border-blue-300"
+                    onClick={() => {
+                      setSelectedFloor(floor);
+                      setIsModalOpen(true);
+                    }}
+                    title="Click to view full floor plan"
+                  >
+                    <FloorPreview floor={floor} />
                   </div>
 
                   <div className="space-y-3">
@@ -105,6 +115,16 @@ function FloorsPage() {
           )}
         </div>
       </div>
+
+      {/* Floor Plan Modal */}
+      <FloorPlanModal
+        floor={selectedFloor}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedFloor(null);
+        }}
+      />
     </div>
   );
 }

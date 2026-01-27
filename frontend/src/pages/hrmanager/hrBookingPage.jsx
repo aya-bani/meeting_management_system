@@ -8,6 +8,7 @@ import { componentService } from "../../services/componentService";
 import PageHeader from "../../components/ui/PageHeader";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import InteractiveFloorPlan from "../../components/floorplan/InteractiveFloorPlan";
 
 function HRBookingPage() {
   const navigate = useNavigate();
@@ -155,92 +156,6 @@ function HRBookingPage() {
     }
   };
 
-  // Render interactive floor plan
-  const renderFloorPlan = () => {
-    if (!selectedFloor || rooms.length === 0) {
-      return (
-        <div className="flex items-center justify-center h-full min-h-[400px] text-gray-500">
-          <p>No rooms available on this floor</p>
-        </div>
-      );
-    }
-
-    const roomCount = rooms.length;
-    const cols = Math.min(roomCount, 4);
-    const rows = Math.ceil(roomCount / cols);
-    const width = 800;
-    const height = 600;
-    const WALL_THICKNESS = 8;
-    const innerWidth = width - WALL_THICKNESS * 2;
-    const innerHeight = height - WALL_THICKNESS * 2;
-    const cellW = innerWidth / cols;
-    const cellH = innerHeight / rows;
-
-    return (
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        width="100%"
-        height="100%"
-        className="border border-gray-200 rounded-lg"
-      >
-        {/* Outer wall */}
-        <rect
-          x={WALL_THICKNESS / 2}
-          y={WALL_THICKNESS / 2}
-          width={width - WALL_THICKNESS}
-          height={height - WALL_THICKNESS}
-          fill="#FFFFFF"
-          stroke="#111827"
-          strokeWidth={WALL_THICKNESS}
-        />
-
-        {/* Rooms */}
-        {rooms.map((room, idx) => {
-          const r = Math.floor(idx / cols);
-          const c = idx % cols;
-          const x = WALL_THICKNESS + c * cellW + 4;
-          const y = WALL_THICKNESS + r * cellH + 4;
-          const w = cellW - 8;
-          const h = cellH - 8;
-          const isSelected = selectedRoom?._id === room._id;
-
-          return (
-            <g key={room._id}>
-              <rect
-                x={x}
-                y={y}
-                width={w}
-                height={h}
-                fill={isSelected ? "#DBEAFE" : "#F9FAFB"}
-                stroke={isSelected ? "#3B82F6" : "#111827"}
-                strokeWidth={isSelected ? 3 : 2}
-                className="cursor-pointer hover:fill-blue-50 transition-colors"
-                onClick={() => handleRoomClick(room)}
-              />
-              <text
-                x={x + w / 2}
-                y={y + h / 2 - 10}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="text-xs font-semibold fill-gray-700 pointer-events-none"
-              >
-                {room.name}
-              </text>
-              <text
-                x={x + w / 2}
-                y={y + h / 2 + 10}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="text-xs fill-gray-500 pointer-events-none"
-              >
-                {room.capacity || 0} seats
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    );
-  };
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -331,11 +246,17 @@ function HRBookingPage() {
                       {selectedFloor?.name || "Floor Plan"}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Click on a room to select it
+                      Click on a room to select it • Scroll to zoom • Drag to pan
                     </p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 min-h-[400px]">
-                    {renderFloorPlan()}
+                  <div className="min-h-[600px]">
+                    <InteractiveFloorPlan
+                      rooms={rooms}
+                      selectedRoom={selectedRoom}
+                      onRoomSelect={handleRoomClick}
+                      width={800}
+                      height={600}
+                    />
                   </div>
                 </Card>
 
